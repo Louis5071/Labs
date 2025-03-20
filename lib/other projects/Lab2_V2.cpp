@@ -1,3 +1,6 @@
+// Link to the video of the project:
+// https://drive.google.com/file/d/15ktjWiF6b--_SbmqLopaydkD0cAV6ZZE/view?usp=sharing
+
 #include <Arduino.h>
 #include <Adafruit_CAP1188.h> // Touch Sensor library
 #include <Wire.h> // I2C library

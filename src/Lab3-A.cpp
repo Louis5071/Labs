@@ -7,6 +7,7 @@
 //#include <HttpClient.h>
 //#include <Ethernet.h>
 //#include <EthernetClient.h>
+//#include "esp_wpa2.h"
 #include <WiFi.h>
 #include <HttpClient.h>
 
@@ -20,8 +21,8 @@ unsigned long startTime;
 
 // This example downloads the URL "http://arduino.cc/"
 
-char ssid[] = "[YOUR_SSID]";    // your network SSID (name) 
-char pass[] = "[YOUR_PASSWORD]"; // your network password (use for WPA, or use as key for WEP)
+char ssid[] = "EuropeanWIFI";    // your network SSID (name) 
+char pass[] = "Frenchroom6969"; // your network password (use for WPA, or use as key for WEP)
 
 // Name of the server we want to connect to
 const char kHostname[] = "worldtimeapi.org";
@@ -68,8 +69,11 @@ void setup() {
   Serial.println(WiFi.localIP());
   Serial.println("MAC address: ");
   Serial.println(WiFi.macAddress());
+  Serial.println("");
 
 }
+
+
 
 void loop() {
   int err =0;

@@ -1,4 +1,5 @@
-// Sensor with I2C
+// Link to the Google Drive:
+// https://drive.google.com/drive/folders/1QxGruO2aD6xiSUlQN3SufxeVR1aypMW0?usp=sharing
 
 #include <WiFi.h>
 #include <HTTPClient.h>

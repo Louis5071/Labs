@@ -7,45 +7,44 @@
 #include <SparkFunLSM6DSO.h>  // Library from SparkFun for the LSM6DSO sensor
 #include <math.h>
 
-LSM6DSO myIMU; //Default constructor is I2C, addr 0x6B
-
-// BLE UUIDs
+// BLE UUIDs (you can change these if needed)
 #define SERVICE_UUID        "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
 #define CHARACTERISTIC_UUID "beb5483e-36e1-4688-b7f5-ea07361b26a8"
 
 // Global BLE characteristic pointer for updating step count
 BLECharacteristic *pCharacteristic;
 
+// Create an instance of the sensor (compatible with the LSM6DS3/LSM6DSO breakout)
+LSM6DSO imu;
+
 int stepCount = 0;          // Total number of steps counted
 bool stepDetected = false;  // Flag to avoid multiple counts per step
 
-// Threshold for detecting a step
-const float threshold = 1;
+// Threshold for detecting a step. Adjust this value based on calibration and mounting.
+const float threshold = 0.1;  // For example, 1.2 g (change as needed)
 
-
+// Setup BLE and the sensor in the setup() function
 void setup() {
   Serial.begin(115200);
-  delay(3000); 
+  delay(1000);
   Serial.println("Bluetooth Step Counter Starting...");
 
   // Initialize I²C and the LSM6DSO sensor
   Wire.begin();
-  delay(10);
-  if( myIMU.begin() )
-    Serial.println("LSM6DSO successfully initialized");
-  else { 
+  if (!imu.begin()) {
     Serial.println("LSM6DSO initialization unsuccessful. Please check wiring.");
-    Serial.println("Freezing");
+    while (1); // Halt if sensor not found
   }
+  Serial.println("LSM6DSO successfully initialized");
 
-  if( myIMU.initialize(BASIC_SETTINGS) )
-    Serial.println("Loaded Settings.");
+  // (Optional) Perform sensor calibration here if required.
+  // Use your preferred calibration procedure to map the sensor readings
+  // and adjust the threshold value accordingly.
 
   // Initialize BLE
   BLEDevice::init("SDSUCS Step Counter");
   BLEServer *pServer = BLEDevice::createServer();
   BLEService *pService = pServer->createService(SERVICE_UUID);
-
   // Create characteristic with read, write and notify properties
   pCharacteristic = pService->createCharacteristic(
                       CHARACTERISTIC_UUID,
@@ -72,29 +71,36 @@ void setup() {
   Serial.println("BLE advertising started; connect using a BLE scanner on your cell phone.");
 }
 
+void loop() {
+  // Sample every 20 milliseconds
+  delay(20);
 
-void loop()
-{
-  // Read sensor data
   float ax, ay, az;
-  ax = myIMU.readFloatAccelX();
-  ay = myIMU.readFloatAccelY();
-  az = myIMU.readFloatAccelZ();
+  // Read acceleration data from the sensor.
 
-  //Debug:
-  /*Serial.println(ax, 3);
-  Serial.println(ay, 3); 
-  Serial.println(az, 3);
-  Serial.println();*/
-  
-  // calculate the root mean square (RMS) from the x and y axes.
-  float magnitude = sqrt(ax * ax + ay * ay);
+  ax = imu.readFloatAccelX();
+  ay = imu.readFloatAccelY();
+  az = imu.readFloatAccelZ();
+
+
+  // The readAccel() function returns true if the data was read successfully.
+  //if (imu.readAccel(&ax, &ay, &az)) {
+    // For step counting, you might choose one axis or combine two axes.
+    // Here, we calculate the root mean square (RMS) from the x and y axes.
+    float magnitude = sqrt(ax * ax + ay * ay);
     
-  // Debug: print the calculated magnitude
-  Serial.print("Acceleration Magnitude (x,y RMS): ");
-  Serial.println(magnitude);
+    // Debug: print the calculated magnitude
+    Serial.print("Acceleration Magnitude (x,y RMS): ");
+    Serial.println(magnitude);
+    Serial.println(ax);
+    Serial.println(ay);
+    Serial.println(az);
 
-  // Step detection:
+
+    // Simple step detection:
+    // - When the magnitude rises above the threshold and a step has not already been detected,
+    //   count a step and set the flag.
+    // - Once the magnitude falls below the threshold, reset the flag.
     if (magnitude > threshold && !stepDetected) {
       stepCount++;
       stepDetected = true;
@@ -110,30 +116,8 @@ void loop()
     if (magnitude < threshold && stepDetected) {
       stepDetected = false;
     }
-  
-
-/*
-  //Get all parameters
-  Serial.print("\nAccelerometer:\n");
-  Serial.print(" X = ");
-  Serial.println(myIMU.readFloatAccelX(), 3);
-  Serial.print(" Y = ");
-  Serial.println(myIMU.readFloatAccelY(), 3);
-  Serial.print(" Z = ");
-  Serial.println(myIMU.readFloatAccelZ(), 3);
-
-  Serial.print("\nGyroscope:\n");
-  Serial.print(" X = ");
-  Serial.println(myIMU.readFloatGyroX(), 3);
-  Serial.print(" Y = ");
-  Serial.println(myIMU.readFloatGyroY(), 3);
-  Serial.print(" Z = ");
-  Serial.println(myIMU.readFloatGyroZ(), 3);
-
-  Serial.print("\nThermometer:\n");
-  Serial.print(" Degrees F = ");
-  Serial.println(myIMU.readTempF(), 3);
-  */
-
-  delay(20);
+  //} 
+  //else {
+  //  Serial.println("Failed to read from LSM6DSO sensor.");
+  //}
 }

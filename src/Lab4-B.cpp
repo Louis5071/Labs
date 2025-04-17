@@ -1,3 +1,6 @@
+// Link to the Google Drive:
+// https://drive.google.com/drive/folders/1UM9p6dqo-4r_iQ5tfjsim7sZyf-zWvU2?usp=sharing
+
 #include <Arduino.h>
 #include <Wire.h>
 #include <BLEDevice.h>
@@ -20,7 +23,37 @@ int stepCount = 0;          // Total number of steps counted
 bool stepDetected = false;  // Flag to avoid multiple counts per step
 
 // Threshold for detecting a step
-const float threshold = 1;
+float threshold = 1;
+
+
+// Calibration Function
+// Samples the sensor for 5 seconds (250 samples at 20ms interval) while at rest.
+// It calculates the average (baseline) magnitude based on the X and Y axes,
+// then adds a margin to determine the step detection threshold.
+
+void calibrateSensor() {
+  Serial.println("Calibrating sensor. Please keep the sensor still for 5 seconds...");
+  const int numSamples = 250;  // 5 seconds at 20 ms per sample
+  float sumMagnitude = 0.0;
+  
+  for (int i = 0; i < numSamples; i++) {
+    float ax = myIMU.readFloatAccelX();
+    float ay = myIMU.readFloatAccelY();
+    // Calculate the magnitude using the x and y axes
+    float magnitude = sqrt(ax * ax + ay * ay);
+    sumMagnitude += magnitude;
+    delay(20);
+  }
+  
+  float baseline = sumMagnitude / numSamples;
+  threshold = baseline + threshold;
+  
+  Serial.print("Calibration complete. Baseline: ");
+  Serial.print(baseline, 3);
+  Serial.print(" | Calibrated Step Threshold: ");
+  Serial.println(threshold, 3);
+}
+
 
 
 void setup() {
@@ -28,7 +61,7 @@ void setup() {
   delay(3000); 
   Serial.println("Bluetooth Step Counter Starting...");
 
-  // Initialize I²C and the LSM6DSO sensor
+  // Initialize I2C and the LSM6DSO sensor
   Wire.begin();
   delay(10);
   if( myIMU.begin() )
@@ -40,6 +73,9 @@ void setup() {
 
   if( myIMU.initialize(BASIC_SETTINGS) )
     Serial.println("Loaded Settings.");
+
+  // Calibrate the sensor before starting step detection.
+  calibrateSensor();
 
   // Initialize BLE
   BLEDevice::init("SDSUCS Step Counter");
@@ -91,8 +127,8 @@ void loop()
   float magnitude = sqrt(ax * ax + ay * ay);
     
   // Debug: print the calculated magnitude
-  Serial.print("Acceleration Magnitude (x,y RMS): ");
-  Serial.println(magnitude);
+  //Serial.print("Acceleration Magnitude (x,y RMS): ");
+  //Serial.println(magnitude);
 
   // Step detection:
     if (magnitude > threshold && !stepDetected) {
@@ -110,30 +146,6 @@ void loop()
     if (magnitude < threshold && stepDetected) {
       stepDetected = false;
     }
-  
-
-/*
-  //Get all parameters
-  Serial.print("\nAccelerometer:\n");
-  Serial.print(" X = ");
-  Serial.println(myIMU.readFloatAccelX(), 3);
-  Serial.print(" Y = ");
-  Serial.println(myIMU.readFloatAccelY(), 3);
-  Serial.print(" Z = ");
-  Serial.println(myIMU.readFloatAccelZ(), 3);
-
-  Serial.print("\nGyroscope:\n");
-  Serial.print(" X = ");
-  Serial.println(myIMU.readFloatGyroX(), 3);
-  Serial.print(" Y = ");
-  Serial.println(myIMU.readFloatGyroY(), 3);
-  Serial.print(" Z = ");
-  Serial.println(myIMU.readFloatGyroZ(), 3);
-
-  Serial.print("\nThermometer:\n");
-  Serial.print(" Degrees F = ");
-  Serial.println(myIMU.readTempF(), 3);
-  */
 
   delay(20);
 }

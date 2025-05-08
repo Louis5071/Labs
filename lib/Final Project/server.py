@@ -5,12 +5,11 @@ import boto3
 app = Flask(__name__)
 
 # AWS SNS configuration
-# Ensure your environment has valid AWS credentials (via environment variables or an IAM role).
 sns_client = boto3.client('sns', region_name='us-east-2')
 SNS_TOPIC_ARN = 'arn:aws:sns:us-east-2:376214823577:Bathroom_Occupancy_Management'
 
 
-# Global state variables to track occupancy and timing
+# Global state variables
 occupancy = "vacant"          # Current occupancy status ("vacant" or "occupied")
 door_close_time = None        # Timestamp when the door sensor first detected closed
 last_motion_time = None       # Timestamp when motion was last detected while in occupied state
@@ -22,6 +21,7 @@ MOTION_DETECTION_WINDOW_START = 2.5  # 2.5 seconds after door closes
 MOTION_DETECTION_WINDOW_END = 30     # 30 seconds after door closes
 MOTION_TIMEOUT = 15 * 60             # 15 minutes (900 seconds) without motion to revert to vacant
 
+# Hosting HTML Website
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -35,7 +35,6 @@ def update():
         return jsonify({"error": "Invalid data"}), 400
 
     # Interpret sensor readings:
-    # Assume: doorState = True when closed, False when open.
     door_state = data.get("doorState")
     motion = data.get("motion")
     button_request = data.get("buttonRequest", False)
@@ -43,7 +42,6 @@ def update():
     current_time = time.time()
 
     # If the TTGO button was pressed, register the request.
-    # In a complete application, you would use a unique user/device ID.
     if button_request:
         if "user" not in queue_requests:
             queue_requests.append("user")
@@ -62,9 +60,9 @@ def update():
 
         # If we are in the waiting window after door closure:
         elapsed_since_door_close = current_time - door_close_time
-        # Only consider motion if within the allowed window and not already occupied.
+        # Only consider motion if within the allowed window:
         if elapsed_since_door_close >= MOTION_DETECTION_WINDOW_START and elapsed_since_door_close <= MOTION_DETECTION_WINDOW_END:
-            if motion and occupancy != "occupied":
+            if motion:
                 occupancy = "occupied"
                 last_motion_time = current_time
         # After the waiting window, if no occupancy has been set, reset the door_close_time.
@@ -82,7 +80,6 @@ def update():
                 door_close_time = None
                 last_motion_time = None
 
-    # Optionally log or process button_request if that logic becomes relevant.
 
     if prev_occupancy == "occupied" and occupancy == "vacant":
         # If someone pressed the button or queued via mobile, fire off a notification:
@@ -99,7 +96,7 @@ def update():
             except Exception as e:
                 print("❌ SNS publish failed:", e)
 
-            # Clear the queue if you want one-time alerts
+            # Clear the queue to get only one notification
             queue_requests.clear()
 
     # Update for next cycle
@@ -132,6 +129,6 @@ def queue():
     return jsonify({"message": f"{user} has been added to the queue"})
 
 if __name__ == '__main__':
-    # Run the server on all available IP addresses on port 5000
+    # Run the Flask app
     app.run(host='0.0.0.0', port=5000)
 

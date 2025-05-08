@@ -14,15 +14,10 @@ const int redLED = 13;
 const int Button = 15;
 const int ReedSwitch = 2;
 const int PIR = 17;
-const int PIRLED = 27;
-
-
 
 // variables
 unsigned long startTime;
 int buttonState = 0;
-
-
 
 void setup() {
   delay(3000);
@@ -33,21 +28,10 @@ void setup() {
   pinMode(Button, INPUT);
   pinMode(ReedSwitch, INPUT);
   pinMode(PIR, INPUT);
-  pinMode(PIRLED, OUTPUT);
   
   // Test Serial Monitor
   Serial.begin(115200);
   Serial.println("Programm Start");
- 
-  /*// Setup DHT20 Sensor
-  Serial.println("DHT20 Sensor test!");
-  Wire1.begin(21, 22);  //  select your pin numbers here
-  if (!DHT.begin()) {
-    Serial.println("Could not find a valid DHT20 sensor, check wiring!");
-    while (1);  
-  }
-  Serial.println("DHT20 sensor initialized successfully!");*/
-
 
   // WiFi connection
   WiFi.begin(ssid, password);
@@ -60,8 +44,6 @@ void setup() {
   Serial.println();
   Serial.println("Connected to Wi-Fi");
   Serial.println();
-
-  
 }
 
 // Send sensor data to AWS Cloud via HTTP POST
@@ -136,18 +118,10 @@ void getOccupancyStatus() {
 void loop() {
    // Read the sensor values
    bool doorState = digitalRead(ReedSwitch);   // Read magnetic door sensor
-   bool motion = digitalRead(PIR);         // Read PIR motion sensor
+   bool motion = digitalRead(PIR);             // Read PIR motion sensor
 
    // Read button state (active HIGH)
    buttonState= (digitalRead(Button) == HIGH);
- 
-    // Debugging output
-   if(motion) {
-     digitalWrite(PIRLED, HIGH); // Turn on PIR LED
-   } else {
-     digitalWrite(PIRLED, LOW);  // Turn off PIR LED
-   }
-
    
    // Send the sensor data to the AWS Cloud server
    sendSensorData(doorState, motion, buttonState);
@@ -155,28 +129,7 @@ void loop() {
    // Retrieve occupancy status from the server and update LEDs accordingly
    getOccupancyStatus();
  
-   // Wait before next cycle (for example, 5 seconds)
+   // Wait before next cycle
    delay(1000);
   
 }
-
-/*
-// read the state of the pushbutton value
-  buttonState = digitalRead(PIR);
-  Serial.println(buttonState);
-
-  // check if the pushbutton is pressed.
-  // if it is, the buttonState is HIGH
-  if (buttonState == HIGH) {
-  // turn LED on
-  digitalWrite(redLED, LOW);
-  digitalWrite(greenLED, HIGH); 
-  }
-  else {
-  // turn LED off
-  digitalWrite(redLED, HIGH);
-  digitalWrite(greenLED, LOW);
-  }
-
-
-*/

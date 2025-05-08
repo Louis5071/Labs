@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bathroom Status</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    .status { font-size: 2em; margin-top: 20px; }
+    button {
+      font-size: 1em;
+      padding: 10px 20px;
+      margin-top: 20px;
+      border: none;
+      border-radius: 5px;
+      background: #007BFF;
+      color: white;
+      cursor: pointer;
+    }
+    button:active { opacity: 0.8; }
+  </style>
+</head>
+<body>
+  <h1>Bathroom Occupancy Status</h1>
+  <div class="status" id="status">Loading...</div>
+
+  <!-- Single button, uses default username "Guest" -->
+  <button id="join-queue">Join Queue</button>
+
+  <script>
+    const DEFAULT_USER = "Guest";
+
+    // Poll the /status endpoint every 5 seconds
+    async function fetchStatus() {
+      try {
+        const res = await fetch('/status');
+        const data = await res.json();
+        document.getElementById('status').innerText = data.occupancy;
+      } catch (err) {
+        console.error('Error fetching status:', err);
+        document.getElementById('status').innerText = 'Error';
+      }
+    }
+    setInterval(fetchStatus, 5000);
+    fetchStatus();
+
+    // Send default user to the /queue endpoint
+    document.getElementById('join-queue').addEventListener('click', async () => {
+      try {
+        const res = await fetch('/queue', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ user: DEFAULT_USER })
+        });
+        const json = await res.json();
+        alert(json.message);
+      } catch (err) {
+        console.error('Error joining queue:', err);
+        alert('Failed to join queue');
+      }
+    });
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bathroom Status</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    .status { font-size: 2em; margin-top: 20px; }
+    button {
+      font-size: 1em;
+      padding: 10px 20px;
+      margin-top: 20px;
+      border: none;
+      border-radius: 5px;
+      background: #007BFF;
+      color: white;
+      cursor: pointer;
+    }
+    button:active { opacity: 0.8; }
+  </style>
+</head>
+<body>
+  <h1>Bathroom Occupancy Status</h1>
+  <div class="status" id="status">Loading...</div>
+
+  <!-- Single button, uses default username "Guest" -->
+  <button id="join-queue">Join Queue</button>
+
+  <script>
+    const DEFAULT_USER = "Guest";
+
+    // Poll the /status endpoint every 5 seconds
+    async function fetchStatus() {
+      try {
+        const res = await fetch('/status');
+        const data = await res.json();
+        document.getElementById('status').innerText = data.occupancy;
+      } catch (err) {
+        console.error('Error fetching status:', err);
+        document.getElementById('status').innerText = 'Error';
+      }
+    }
+    setInterval(fetchStatus, 5000);
+    fetchStatus();
+
+    // Send default user to the /queue endpoint
+    document.getElementById('join-queue').addEventListener('click', async () => {
+      try {
+        const res = await fetch('/queue', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ user: DEFAULT_USER })
+        });
+        const json = await res.json();
+        alert(json.message);
+      } catch (err) {
+        console.error('Error joining queue:', err);
+        alert('Failed to join queue');
+      }
+    });
+    </script>
+</body>
+</html>
